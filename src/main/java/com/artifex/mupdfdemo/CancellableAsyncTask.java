@@ -12,7 +12,7 @@ public class CancellableAsyncTask<Params, Result>
 
 	public void onPreExecute()
 	{
-        
+
 	}
 
 	public void onPostExecute(Result result)

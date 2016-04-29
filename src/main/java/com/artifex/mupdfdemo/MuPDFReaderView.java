@@ -12,14 +12,12 @@ import android.view.View;
 import android.view.WindowManager;
 
 public class MuPDFReaderView extends ReaderView {
-	enum Mode {Viewing, Selecting, Drawing}
+	public enum Mode {Viewing, Selecting, Drawing}
 	private final Context mContext;
 	private boolean mLinksEnabled = false;
 	private Mode mMode = Mode.Viewing;
 	private boolean tapDisabled = false;
 	private int tapPageMargin;
-    
-    private final boolean TAP_PAGING_ENABLED = false;
 
 	protected void onTapMainDocArea() {}
 	protected void onDocMotion() {}
@@ -95,13 +93,13 @@ public class MuPDFReaderView extends ReaderView {
 							// Clicked on a remote (GoToR) link
 						}
 					});
-				} else if (TAP_PAGING_ENABLED && e.getX() < tapPageMargin) {
+				} else if (e.getX() < tapPageMargin) {
 					super.smartMoveBackwards();
-				} else if (TAP_PAGING_ENABLED && e.getX() > super.getWidth() - tapPageMargin) {
+				} else if (e.getX() > super.getWidth() - tapPageMargin) {
 					super.smartMoveForwards();
-				} else if (TAP_PAGING_ENABLED && e.getY() < tapPageMargin) {
+				} else if (e.getY() < tapPageMargin) {
 					super.smartMoveBackwards();
-				} else if (TAP_PAGING_ENABLED && e.getY() > super.getHeight() - tapPageMargin) {
+				} else if (e.getY() > super.getHeight() - tapPageMargin) {
 					super.smartMoveForwards();
 				} else {
 					onTapMainDocArea();
@@ -229,7 +227,7 @@ public class MuPDFReaderView extends ReaderView {
 
 		((MuPDFView) v).setChangeReporter(new Runnable() {
 			public void run() {
-				applyToChildren(new ReaderView.ViewMapper() {
+				applyToChildren(new ViewMapper() {
 					@Override
 					void applyToView(View view) {
 						((MuPDFView) view).update();

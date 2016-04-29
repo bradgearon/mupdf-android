@@ -39,12 +39,12 @@ import android.os.Message;
  * perform background operations and publish results on the UI thread without
  * having to manipulate threads and/or handlers.</p>
  *
- * <p>AsyncTask is designed to be a helper class around {@link Thread} and {@link android.os.Handler}
+ * <p>AsyncTask is designed to be a helper class around {@link Thread} and {@link Handler}
  * and does not constitute a generic threading framework. AsyncTasks should ideally be
  * used for short operations (a few seconds at the most.) If you need to keep threads
  * running for long periods of time, it is highly recommended you use the various APIs
- * provided by the <code>java.util.concurrent</code> pacakge such as {@link java.util.concurrent.Executor},
- * {@link java.util.concurrent.ThreadPoolExecutor} and {@link java.util.concurrent.FutureTask}.</p>
+ * provided by the <code>java.util.concurrent</code> pacakge such as {@link Executor},
+ * {@link ThreadPoolExecutor} and {@link FutureTask}.</p>
  *
  * <p>An asynchronous task is defined by a computation that runs on a background thread and
  * whose result is published on the UI thread. An asynchronous task is defined by 3 generic
@@ -174,7 +174,7 @@ import android.os.Message;
  * {@link android.os.Build.VERSION_CODES#HONEYCOMB}, tasks are executed on a single
  * thread to avoid common application errors caused by parallel execution.</p>
  * <p>If you truly want parallel execution, you can invoke
- * {@link #executeOnExecutor(java.util.concurrent.Executor, Object[])} with
+ * {@link #executeOnExecutor(Executor, Object[])} with
  * {@link #THREAD_POOL_EXECUTOR}.</p>
  */
 public abstract class AsyncTask<Params, Progress, Result> {
@@ -196,14 +196,14 @@ public abstract class AsyncTask<Params, Progress, Result> {
             new LinkedBlockingQueue<Runnable>(10);
 
     /**
-     * An {@link java.util.concurrent.Executor} that can be used to execute tasks in parallel.
+     * An {@link Executor} that can be used to execute tasks in parallel.
      */
     public static final Executor THREAD_POOL_EXECUTOR
             = new ThreadPoolExecutor(CORE_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE,
                     TimeUnit.SECONDS, sPoolWorkQueue, sThreadFactory);
 
     /**
-     * An {@link java.util.concurrent.Executor} that executes tasks one at a time in serial
+     * An {@link Executor} that executes tasks one at a time in serial
      * order.  This serialization is global to a particular process.
      */
     public static final Executor SERIAL_EXECUTOR = new SerialExecutor();
@@ -262,7 +262,7 @@ public abstract class AsyncTask<Params, Progress, Result> {
          */
         RUNNING,
         /**
-         * Indicates that {@link com.artifex.mupdfdemo.AsyncTask#onPostExecute} has finished.
+         * Indicates that {@link AsyncTask#onPostExecute} has finished.
          */
         FINISHED,
     }
@@ -476,8 +476,8 @@ public abstract class AsyncTask<Params, Progress, Result> {
      *
      * @return The computed result.
      *
-     * @throws java.util.concurrent.CancellationException If the computation was cancelled.
-     * @throws java.util.concurrent.ExecutionException If the computation threw an exception.
+     * @throws CancellationException If the computation was cancelled.
+     * @throws ExecutionException If the computation threw an exception.
      * @throws InterruptedException If the current thread was interrupted
      *         while waiting.
      */
@@ -494,11 +494,11 @@ public abstract class AsyncTask<Params, Progress, Result> {
      *
      * @return The computed result.
      *
-     * @throws java.util.concurrent.CancellationException If the computation was cancelled.
-     * @throws java.util.concurrent.ExecutionException If the computation threw an exception.
+     * @throws CancellationException If the computation was cancelled.
+     * @throws ExecutionException If the computation threw an exception.
      * @throws InterruptedException If the current thread was interrupted
      *         while waiting.
-     * @throws java.util.concurrent.TimeoutException If the wait timed out.
+     * @throws TimeoutException If the wait timed out.
      */
     public final Result get(long timeout, TimeUnit unit) throws InterruptedException,
             ExecutionException, TimeoutException {
@@ -528,9 +528,9 @@ public abstract class AsyncTask<Params, Progress, Result> {
      * @return This instance of AsyncTask.
      *
      * @throws IllegalStateException If {@link #getStatus()} returns either
-     *         {@link com.artifex.mupdfdemo.AsyncTask.Status#RUNNING} or {@link com.artifex.mupdfdemo.AsyncTask.Status#FINISHED}.
+     *         {@link Status#RUNNING} or {@link Status#FINISHED}.
      *
-     * @see #executeOnExecutor(java.util.concurrent.Executor, Object[])
+     * @see #executeOnExecutor(Executor, Object[])
      * @see #execute(Runnable)
      */
     public final AsyncTask<Params, Progress, Result> execute(Params... params) {
@@ -543,7 +543,7 @@ public abstract class AsyncTask<Params, Progress, Result> {
      *
      * <p>This method is typically used with {@link #THREAD_POOL_EXECUTOR} to
      * allow multiple tasks to run in parallel on a pool of threads managed by
-     * AsyncTask, however you can also use your own {@link java.util.concurrent.Executor} for custom
+     * AsyncTask, however you can also use your own {@link Executor} for custom
      * behavior.
      *
      * <p><em>Warning:</em> Allowing multiple tasks to run in parallel from
@@ -566,7 +566,7 @@ public abstract class AsyncTask<Params, Progress, Result> {
      * @return This instance of AsyncTask.
      *
      * @throws IllegalStateException If {@link #getStatus()} returns either
-     *         {@link com.artifex.mupdfdemo.AsyncTask.Status#RUNNING} or {@link com.artifex.mupdfdemo.AsyncTask.Status#FINISHED}.
+     *         {@link Status#RUNNING} or {@link Status#FINISHED}.
      *
      * @see #execute(Object[])
      */
@@ -600,7 +600,7 @@ public abstract class AsyncTask<Params, Progress, Result> {
      * information on the order of execution.
      *
      * @see #execute(Object[])
-     * @see #executeOnExecutor(java.util.concurrent.Executor, Object[])
+     * @see #executeOnExecutor(Executor, Object[])
      */
     public static void execute(Runnable runnable) {
         sDefaultExecutor.execute(runnable);

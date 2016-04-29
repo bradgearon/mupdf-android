@@ -1,6 +1,7 @@
 package com.artifex.mupdfdemo;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.util.SparseArray;
@@ -8,22 +9,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
-import com.artifex.utils.PdfBitmap;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 public class MuPDFPageAdapter extends BaseAdapter {
 	private final Context mContext;
 	private final FilePicker.FilePickerSupport mFilePickerSupport;
 	private final MuPDFCore mCore;
 	private final SparseArray<PointF> mPageSizes = new SparseArray<PointF>();
-    private SparseArray<MuPDFPageView> pages = new SparseArray<MuPDFPageView>();
-    private Collection<PdfBitmap> pdfBitmapList; // Each signature for each page.
-    private int numSignature;
+	private       Bitmap mSharedHqBm;
 
 	public MuPDFPageAdapter(Context c, FilePicker.FilePickerSupport filePickerSupport, MuPDFCore core) {
 		mContext = c;
@@ -36,22 +27,31 @@ public class MuPDFPageAdapter extends BaseAdapter {
 	}
 
 	public Object getItem(int position) {
-        return pages.get(position);
+		return null;
 	}
 
 	public long getItemId(int position) {
 		return 0;
 	}
 
-	public View getView(final int position, View convertView, ViewGroup parent) {
+	public void releaseBitmaps()
+	{
+		//  recycle and release the shared bitmap.
+		if (mSharedHqBm!=null)
+			mSharedHqBm.recycle();
+		mSharedHqBm = null;
+	}
 
-        final MuPDFPageView pageView;
-        if (pages.get(position) == null) {
-            pageView = new MuPDFPageView(mContext, mFilePickerSupport, mCore, new Point(parent.getWidth(), parent.getHeight()), this);
-            pages.put(position, pageView);
-        } else {
-            pageView = pages.get(position);
-        }
+	public View getView(final int position, View convertView, ViewGroup parent) {
+		final MuPDFPageView pageView;
+		if (convertView == null) {
+			if (mSharedHqBm == null || mSharedHqBm.getWidth() != parent.getWidth() || mSharedHqBm.getHeight() != parent.getHeight())
+				mSharedHqBm = Bitmap.createBitmap(parent.getWidth(), parent.getHeight(), Bitmap.Config.ARGB_8888);
+
+			pageView = new MuPDFPageView(mContext, mFilePickerSupport, mCore, new Point(parent.getWidth(), parent.getHeight()), mSharedHqBm);
+		} else {
+			pageView = (MuPDFPageView) convertView;
+		}
 
 		PointF pageSize = mPageSizes.get(position);
 		if (pageSize != null) {
@@ -84,39 +84,4 @@ public class MuPDFPageAdapter extends BaseAdapter {
 		}
 		return pageView;
 	}
-
-    public Collection<PdfBitmap> getPdfBitmapList() {
-		if (pdfBitmapList == null) {
-			pdfBitmapList = new HashSet<PdfBitmap>();
-		}
-        return pdfBitmapList;
-    }
-
-    public void setPdfBitmapList(Collection<PdfBitmap> pdfBitmapList) {
-        this.pdfBitmapList = pdfBitmapList;
-    }
-
-    public int getNumSignature() {
-        return numSignature;
-    }
-
-    public void setNumSignature(int numSignature) {
-        this.numSignature = numSignature;
-    }
-
-	public void addBitmaps(Set<PdfBitmap> pdfBitmaps) {
-		if (pdfBitmaps != null) {
-			for (PdfBitmap pdfBitmap : pdfBitmaps) {
-				addBitmap(pdfBitmap);
-			}
-		}
-	}
-
-	public void addBitmap(PdfBitmap pdfBitmap) {
-		if (pdfBitmap.getType() == PdfBitmap.Type.SIGNATURE) { //mAdapter null ???
-			numSignature = numSignature + 1;
-		}
-		getPdfBitmapList().add(pdfBitmap);
-	}
-
 }

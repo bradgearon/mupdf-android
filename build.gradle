@@ -34,6 +34,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    
+    lintOptions {
+        disable 'MissingTranslation','JavascriptInterface','ParcelCreator'
+        abortOnError false     
+    }		   
 }
 
 configurations {
@@ -46,16 +52,3 @@ dependencies {
     compile 'com.android.support:appcompat-v7:21.0.3'
 }
 
-// For Maven Repository submitting : Execute task: UploadArchives. Ex: > gradle uploadArchives
-// Define repoUsername, repoPassword and repoUrl on "gradle.properties" file in order to use this task.
-uploadArchives {
-    repositories.mavenDeployer {
-        configuration = configurations.deployerJars
-        repository(url: repoUrl) {
-            authentication(userName: repoUsername, password: repoPassword)
-        }
-        pom.version = muPdfversionName
-        pom.artifactId = "mupdf-android"
-        pom.groupId = "com.viafirma"
-    }
-}

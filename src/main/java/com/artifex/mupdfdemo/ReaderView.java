@@ -1,12 +1,17 @@
 package com.artifex.mupdfdemo;
 
+import java.util.LinkedList;
+import java.util.NoSuchElementException;
+
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.os.SystemClock;
-import android.support.v4.view.MotionEventCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -16,20 +21,9 @@ import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.Scroller;
 
-import com.artifex.utils.DigitalizedEventCallback;
-import com.artifex.utils.PdfBitmap;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
 public class ReaderView
 		extends AdapterView<Adapter>
-		implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, ScaleGestureDetector.OnScaleGestureListener, Runnable {
+		implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener, Runnable {
 	private static final int  MOVING_DIAGONALLY = 0;
 	private static final int  MOVING_LEFT       = 1;
 	private static final int  MOVING_RIGHT      = 2;
@@ -69,14 +63,8 @@ public class ReaderView
 	private final Stepper     mStepper;
 	private int               mScrollerLastX;
 	private int               mScrollerLastY;
-
-    private PageView currentPage;
-    private DigitalizedEventCallback eventCallback;
-
-    private float             mLastTouchX;
-    private float             mLastTouchY;
-
-	private Collection<PdfBitmap> pdfBitmaps;
+	private float		  mLastScaleFocusX;
+	private float		  mLastScaleFocusY;
 
 	static abstract class ViewMapper {
 		abstract void applyToView(View view);
@@ -392,7 +380,7 @@ public class ReaderView
 		View v = mChildViews.get(mCurrent);
 		if (v != null) {
 			Rect bounds = getScrollBounds(v);
-			switch(directionOfTravel(velocityX, velocityY)) {
+			switch(directionOfTravel(velocityX * 1.2f, velocityY * 1.2f)) {
 			case MOVING_LEFT:
 				if (HORIZONTAL_SCROLLING && bounds.left >= 0) {
 					// Fling off to the left bring next view onto screen
@@ -461,6 +449,9 @@ public class ReaderView
 		return true;
 	}
 
+	public void onLongPress(MotionEvent e) {
+	}
+
 	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
 			float distanceY) {
 		if (!mScaling) {
@@ -494,12 +485,22 @@ public class ReaderView
 
 			View v = mChildViews.get(mCurrent);
 			if (v != null) {
+				float currentFocusX = detector.getFocusX();
+				float currentFocusY = detector.getFocusY();
 				// Work out the focus point relative to the view top left
-				int viewFocusX = (int)detector.getFocusX() - (v.getLeft() + mXScroll);
-				int viewFocusY = (int)detector.getFocusY() - (v.getTop() + mYScroll);
+				int viewFocusX = (int)currentFocusX - (v.getLeft() + mXScroll);
+				int viewFocusY = (int)currentFocusY - (v.getTop() + mYScroll);
 				// Scroll to maintain the focus point
 				mXScroll += viewFocusX - viewFocusX * factor;
 				mYScroll += viewFocusY - viewFocusY * factor;
+
+				if (mLastScaleFocusX>=0)
+					mXScroll+=currentFocusX-mLastScaleFocusX;
+				if (mLastScaleFocusY>=0)
+					mYScroll+=currentFocusY-mLastScaleFocusY;
+
+				mLastScaleFocusX=currentFocusX;
+				mLastScaleFocusY=currentFocusY;
 				requestLayout();
 			}
 		}
@@ -512,6 +513,7 @@ public class ReaderView
 		// screen is not showing the effect of them, so they can
 		// only confuse the user
 		mXScroll = mYScroll = 0;
+		mLastScaleFocusX = mLastScaleFocusY = -1;
 		return true;
 	}
 
@@ -527,32 +529,8 @@ public class ReaderView
 		mScaling = false;
 	}
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-
-        boolean movementEnd = false;
-
-        // We need this check to avoid refreshing the screen after a "tap" or "double tap". We only want to refresh the PDF after a pan, pinch or drag.
-        int ident = MotionEventCompat.getActionIndex(event);
-        if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-            mLastTouchX = MotionEventCompat.getX(event, ident);
-            mLastTouchY = MotionEventCompat.getY(event, ident);
-        }
-
-        if (event.getActionMasked() == MotionEvent.ACTION_UP) {
-            float upX = MotionEventCompat.getX(event, ident);
-            float upY = MotionEventCompat.getY(event, ident);
-            int displacementX = (int) Math.abs(mLastTouchX - upX);
-            int displacementY = (int) Math.abs(mLastTouchY - upY);
-            movementEnd = (displacementX > 10) || (displacementY > 10);
-        }
-
-        processTouchEvent(event, movementEnd);
-
-        return true;
-    }
-    
-    private void processTouchEvent(MotionEvent event, boolean withRefresh) {
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
 		mScaleGestureDetector.onTouchEvent(event);
 		mGestureDetector.onTouchEvent(event);
 
@@ -563,7 +541,7 @@ public class ReaderView
 			mUserInteracting = false;
 
 			View v = mChildViews.get(mCurrent);
-			if (v != null && withRefresh) {
+			if (v != null) {
 				if (mScroller.isFinished()) {
 					// If, at the end of user interaction, there is no
 					// current inertial scroll in operation then animate
@@ -580,6 +558,7 @@ public class ReaderView
 		}
 
 		requestLayout();
+		return true;
 	}
 
 	@Override
@@ -592,9 +571,39 @@ public class ReaderView
 	}
 
 	@Override
-	protected void onLayout(boolean changed, int left, int top, int right,
-			int bottom) {
+	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
 		super.onLayout(changed, left, top, right, bottom);
+
+		try {
+			onLayout2(changed, left, top, right, bottom);
+		}
+		catch (OutOfMemoryError e) {
+			System.out.println("Out of memory during layout");
+
+			//  we might get an out of memory error.
+			//  so let's display an alert.
+			//  TODO: a better message, in resources.
+
+			if (!memAlert) {
+				memAlert = true;
+				AlertDialog alertDialog = MuPDFActivity.getAlertBuilder().create();
+				alertDialog.setMessage("Out of memory during layout");
+				alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.dismiss();
+							memAlert = false;
+						}
+					});
+				alertDialog.show();
+			}
+		}
+	}
+
+	private boolean memAlert = false;
+
+	private void onLayout2(boolean changed, int left, int top, int right,
+			int bottom) {
 
 		// "Edit mode" means when the View is being displayed in the Android GUI editor. (this class
 		// is instantiated in the IDE, so we need to be a bit careful what we do).
@@ -686,10 +695,6 @@ public class ReaderView
 		int cvLeft, cvRight, cvTop, cvBottom;
 		boolean notPresent = (mChildViews.get(mCurrent) == null);
 		cv = getOrCreateChild(mCurrent);
-        currentPage = (PageView) cv;
-		currentPage.setEventCallback(eventCallback);
-
-        currentPage.setParentSize(new Point(right-left, bottom-top));
 		// When the view is sub-screen-size in either dimension we
 		// offset it to center within the screen area, and to keep
 		// the views spaced out
@@ -783,6 +788,14 @@ public class ReaderView
 
 	@Override
 	public void setAdapter(Adapter adapter) {
+
+		//  release previous adapter's bitmaps
+		if (null!=mAdapter && adapter!=mAdapter) {
+			if (adapter instanceof MuPDFPageAdapter){
+				((MuPDFPageAdapter) adapter).releaseBitmaps();
+			}
+		}
+
 		mAdapter = adapter;
 
 		requestLayout();
@@ -828,9 +841,8 @@ public class ReaderView
 
 		if (!mReflow) {
 		// Work out a scale that will fit it to this view
-//		float scale = Math.min((float)getWidth()/(float)v.getMeasuredWidth(),
-//					(float)getHeight()/(float)v.getMeasuredHeight());
-        float scale = (float)getWidth()/(float)v.getMeasuredWidth();
+		float scale = Math.min((float)getWidth()/(float)v.getMeasuredWidth(),
+					(float)getHeight()/(float)v.getMeasuredHeight());
 		// Use the fitting values scaled by our current scale factor
 		v.measure(MeasureSpec.EXACTLY | (int)(v.getMeasuredWidth()*scale*mScale),
 				MeasureSpec.EXACTLY | (int)(v.getMeasuredHeight()*scale*mScale));
@@ -873,8 +885,8 @@ public class ReaderView
 		// onSettle and onUnsettle are posted so that the calls
 		// wont be executed until after the system has performed
 		// layout.
-		post(new Runnable() {
-			public void run() {
+		post (new Runnable() {
+			public void run () {
 				onSettle(v);
 			}
 		});
@@ -898,8 +910,8 @@ public class ReaderView
 	}
 
 	private Point subScreenSizeOffset(View v) {
-		return new Point(Math.max((getWidth() - v.getMeasuredWidth()) / 2, 0),
-				Math.max((getHeight() - v.getMeasuredHeight()) / 2, 0));
+		return new Point(Math.max((getWidth() - v.getMeasuredWidth())/2, 0),
+				Math.max((getHeight() - v.getMeasuredHeight())/2, 0));
 	}
 
 	private static int directionOfTravel(float vx, float vy) {
@@ -921,128 +933,4 @@ public class ReaderView
 		default: throw new NoSuchElementException();
 		}
 	}
-
-    // Viafirma Code:
-
-    public void addBitmap(PdfBitmap pdfBitmap) {
-		if (mAdapter instanceof MuPDFPageAdapter) {
-			// Add the bitmap to the adapter.
-			((MuPDFPageAdapter)mAdapter).addBitmap(pdfBitmap);
-			// Update the view to see the added bitmap.
-			updateCurrentPage();
-		}
-    }
-
-	public void setPdfBitmapList(Collection<PdfBitmap> pdfBitmaps) {
-		this.pdfBitmaps = pdfBitmaps;
-		if (mAdapter instanceof MuPDFPageAdapter) {
-			((MuPDFPageAdapter) mAdapter).setPdfBitmapList(pdfBitmaps);
-		}
-	}
-
-	public Collection<PdfBitmap> getBitmapList() {
-		if (mAdapter instanceof MuPDFPageAdapter) {
-			return ((MuPDFPageAdapter)mAdapter).getPdfBitmapList();
-		} else {
-			return new HashSet<>();
-		}
-	}
-
-    public boolean removeBitmapOnPosition(Point point) {
-        if (currentPage != null) {
-            return currentPage.removeBitmapOnPosition(point);
-        } else {
-            return false;
-        }
-    }
-    
-    public void refreshView(){
-        long downTime = SystemClock.uptimeMillis()+200;
-        long eventTime = SystemClock.uptimeMillis() + 210;
-        float x = 1.0f;
-        float y = 1.0f;
-
-        int metaState = 0;
-        MotionEvent motionEvent = MotionEvent.obtain(
-                downTime,
-                eventTime,
-                MotionEvent.ACTION_UP,
-                x,
-                y,
-                metaState
-        );
-
-        processTouchEvent(motionEvent, true);
-    }
-
-	public void updateCurrentPage() {
-		if (currentPage != null) {
-			//setDisplayedViewIndex(currentPage.getPage());
-			currentPage.redrawEntireBitmaps(); // No repinta el zoomed si ya estoy zoomed.
-			currentPage.updateHq(true);
-		}
-	}
-
-	public void redrawAll() {
-		redrawPage(currentPage);
-		if (mCurrent-1 > 0) {
-			PageView prevPage = (PageView) mChildViews.get(mCurrent - 1);
-			redrawPage(prevPage);
-		}
-		if (mCurrent+1 < mChildViews.size()) {
-			PageView posPage = (PageView) mChildViews.get(mCurrent + 1);
-			redrawPage(posPage);
-		}
-	}
-
-	private void redrawPage(PageView pageView) {
-		if (pageView != null) {
-			pageView.updateEntireCanvas(false);
-			pageView.updateHq(true);
-		}
-	}
-
-    @Override
-    public boolean onDoubleTap(MotionEvent e) {
-        if (currentPage != null) {
-            return currentPage.onDoubleTap(e, mScale);
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public void onLongPress(MotionEvent e) {
-        if (currentPage != null) {
-            currentPage.onLongPress(e, mScale);
-        }
-    }
-
-    @Override
-    public boolean onDoubleTapEvent(MotionEvent e) {
-        return false;
-    }
-
-    @Override
-    public boolean onSingleTapConfirmed(MotionEvent e) {
-        if (currentPage != null) {
-            currentPage.onSingleTap(e, mScale);
-        }
-        return false;
-    }
-
-    public DigitalizedEventCallback getEventCallback() {
-        DigitalizedEventCallback result = null;
-        if (currentPage != null) {
-            result = currentPage.getEventCallback();
-        }
-        return result;
-    }
-
-    public void setEventCallback(DigitalizedEventCallback eventCallback) {
-        this.eventCallback = eventCallback;
-        if (currentPage != null) {
-            currentPage.setEventCallback(eventCallback);
-        }
-    }
 }

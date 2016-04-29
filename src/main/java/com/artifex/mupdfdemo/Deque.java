@@ -75,7 +75,7 @@ import java.util.Stack;
  *  </tr>
  * </table>
  *
- * <p>This interface extends the {@link java.util.Queue} interface.  When a deque is
+ * <p>This interface extends the {@link Queue} interface.  When a deque is
  * used as a queue, FIFO (First-In-First-Out) behavior results.  Elements are
  * added at the end of the deque and removed from the beginning.  The methods
  * inherited from the <tt>Queue</tt> interface are precisely equivalent to
@@ -88,33 +88,33 @@ import java.util.Stack;
  *    <td ALIGN=CENTER> <b>Equivalent <tt>Deque</tt> Method</b></td>
  *  </tr>
  *  <tr>
- *    <td>{@link java.util.Queue#add add(e)}</td>
+ *    <td>{@link Queue#add add(e)}</td>
  *    <td>{@link #addLast addLast(e)}</td>
  *  </tr>
  *  <tr>
- *    <td>{@link java.util.Queue#offer offer(e)}</td>
+ *    <td>{@link Queue#offer offer(e)}</td>
  *    <td>{@link #offerLast offerLast(e)}</td>
  *  </tr>
  *  <tr>
- *    <td>{@link java.util.Queue#remove remove()}</td>
+ *    <td>{@link Queue#remove remove()}</td>
  *    <td>{@link #removeFirst removeFirst()}</td>
  *  </tr>
  *  <tr>
- *    <td>{@link java.util.Queue#poll poll()}</td>
+ *    <td>{@link Queue#poll poll()}</td>
  *    <td>{@link #pollFirst pollFirst()}</td>
  *  </tr>
  *  <tr>
- *    <td>{@link java.util.Queue#element element()}</td>
+ *    <td>{@link Queue#element element()}</td>
  *    <td>{@link #getFirst getFirst()}</td>
  *  </tr>
  *  <tr>
- *    <td>{@link java.util.Queue#peek peek()}</td>
+ *    <td>{@link Queue#peek peek()}</td>
  *    <td>{@link #peek peekFirst()}</td>
  *  </tr>
  * </table>
  *
  * <p>Deques can also be used as LIFO (Last-In-First-Out) stacks.  This
- * interface should be used in preference to the legacy {@link java.util.Stack} class.
+ * interface should be used in preference to the legacy {@link Stack} class.
  * When a deque is used as a stack, elements are pushed and popped from the
  * beginning of the deque.  Stack methods are precisely equivalent to
  * <tt>Deque</tt> methods as indicated in the table below:
@@ -147,7 +147,7 @@ import java.util.Stack;
  * elements, {@link #removeFirstOccurrence removeFirstOccurrence} and
  * {@link #removeLastOccurrence removeLastOccurrence}.
  *
- * <p>Unlike the {@link java.util.List} interface, this interface does not
+ * <p>Unlike the {@link List} interface, this interface does not
  * provide support for indexed access to elements.
  *
  * <p>While <tt>Deque</tt> implementations are not strictly required
@@ -250,7 +250,7 @@ public interface Deque<E> extends Queue<E> {
      * exception if this deque is empty.
      *
      * @return the head of this deque
-     * @throws java.util.NoSuchElementException if this deque is empty
+     * @throws NoSuchElementException if this deque is empty
      */
     E removeFirst();
 
@@ -260,7 +260,7 @@ public interface Deque<E> extends Queue<E> {
      * exception if this deque is empty.
      *
      * @return the tail of this deque
-     * @throws java.util.NoSuchElementException if this deque is empty
+     * @throws NoSuchElementException if this deque is empty
      */
     E removeLast();
 
@@ -287,7 +287,7 @@ public interface Deque<E> extends Queue<E> {
      * throws an exception if this deque is empty.
      *
      * @return the head of this deque
-     * @throws java.util.NoSuchElementException if this deque is empty
+     * @throws NoSuchElementException if this deque is empty
      */
     E getFirst();
 
@@ -297,7 +297,7 @@ public interface Deque<E> extends Queue<E> {
      * throws an exception if this deque is empty.
      *
      * @return the tail of this deque
-     * @throws java.util.NoSuchElementException if this deque is empty
+     * @throws NoSuchElementException if this deque is empty
      */
     E getLast();
 
@@ -367,7 +367,7 @@ public interface Deque<E> extends Queue<E> {
      * <p>This method is equivalent to {@link #addLast}.
      *
      * @param e the element to add
-     * @return <tt>true</tt> (as specified by {@link java.util.Collection#add})
+     * @return <tt>true</tt> (as specified by {@link Collection#add})
      * @throws IllegalStateException if the element cannot be added at this
      *         time due to capacity restrictions
      * @throws ClassCastException if the class of the specified element
@@ -411,7 +411,7 @@ public interface Deque<E> extends Queue<E> {
      * <p>This method is equivalent to {@link #removeFirst()}.
      *
      * @return the head of the queue represented by this deque
-     * @throws java.util.NoSuchElementException if this deque is empty
+     * @throws NoSuchElementException if this deque is empty
      */
     E remove();
 
@@ -436,7 +436,7 @@ public interface Deque<E> extends Queue<E> {
      * <p>This method is equivalent to {@link #getFirst()}.
      *
      * @return the head of the queue represented by this deque
-     * @throws java.util.NoSuchElementException if this deque is empty
+     * @throws NoSuchElementException if this deque is empty
      */
     E element();
 
@@ -484,7 +484,7 @@ public interface Deque<E> extends Queue<E> {
      *
      * @return the element at the front of this deque (which is the top
      *         of the stack represented by this deque)
-     * @throws java.util.NoSuchElementException if this deque is empty
+     * @throws NoSuchElementException if this deque is empty
      */
     E pop();
 
